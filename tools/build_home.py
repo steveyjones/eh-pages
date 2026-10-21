@@ -45,8 +45,7 @@ if data.get('forward'):
     <div class="card"><h3>For the trustees on {e(m["label"].split(" ",1)[1])}</h3><p class="small muted" style="margin:0">From section 8 of the report.</p><ul class="dec">{decisions}</ul></div>
   </section>
 
-  <section><h2>Background papers <span class="rule"></span></h2><div class="libs">{library}</div>
-  <div class="coming">Being added: <ul>{coming}</ul></div></section>
+
 
 '''
 

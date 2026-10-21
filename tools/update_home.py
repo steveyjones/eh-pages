@@ -94,7 +94,7 @@ if k and m:
     k['sub'] = (f'{len(booking)} overdue renewal{"s" if len(booking) != 1 else ""} being booked: ' + ', '.join(x.lower() for x in booking)) if booking else 'Nothing overdue'
 
 # policies (section 7)
-m = re.search(r'sign-off on (\d+ \w+) \((\d+)\) and the other half in (\w+) \((\d+)\)', section('policies'))
+m = re.search(r'sign-off on (\d+ \w+) \((\d+)(?: of \d+)?\) and the other half in (\w+) \((\d+)(?: of \d+)?\)', section('policies'))
 k = kpi('Policies to sign off')
 if k and m:
     k['v'] = f'{m.group(2)}/{int(m.group(2)) + int(m.group(4))}'; k['sub'] = f'{m.group(2)} on {m.group(1)}, the other {m.group(4)} in {m.group(3)}'

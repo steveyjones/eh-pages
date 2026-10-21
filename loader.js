@@ -62,6 +62,14 @@
 
   // stretch the element to the full window width, whatever column GHL puts it in
   function bleed(el) {
+    // drop the GHL section, row and column padding above and below
+    for (var n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+      if (/\bc-(section|row|column)\b/.test(n.className || '')) {
+        n.style.setProperty('padding-top', '0', 'important'); n.style.setProperty('padding-bottom', '0', 'important');
+        n.style.setProperty('margin-top', '0', 'important'); n.style.setProperty('margin-bottom', '0', 'important');
+      }
+      if (/\bc-section\b/.test(n.className || '')) break;
+    }
     function fit() {
       el.style.marginLeft = '0px'; el.style.width = '';
       var w = document.documentElement.clientWidth, left = el.getBoundingClientRect().left;

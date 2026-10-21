@@ -47,6 +47,14 @@
     '.eh-upd{font:12px Jost,Inter,Arial,sans-serif;color:#5f6670;text-align:right;padding:4px 8px}' +
     '.eh-load{font:14px Jost,Inter,Arial,sans-serif;color:#5f6670;padding:24px}';
 
+  function noIndex() {
+    // keep the host page out of search engines
+    if (document.querySelector('meta[name="robots"][data-eh]')) return;
+    var m = document.createElement('meta'); m.name = 'robots'; m.content = 'noindex, nofollow, noarchive'; m.setAttribute('data-eh', '1');
+    document.head.appendChild(m);
+  }
+  noIndex();
+
   function addCss() {
     if (document.getElementById('eh-pages-css')) return;
     var s = document.createElement('style'); s.id = 'eh-pages-css'; s.textContent = CSS; document.head.appendChild(s);

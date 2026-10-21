@@ -5,7 +5,7 @@ Password-protected Epiphany House pages for the GHL site: budget, trustee report
 - `loader.js`: the script each GHL page loads. It asks for the password, then fetches and decrypts the page in the browser.
 - `*.enc`: page content, AES-GCM encrypted. Nothing here is readable without the password, and the password is not stored in this repository.
 - `tools/build_budget.py`: turns the Claude budget dashboard and its CSVs into one standalone page.
-- `tools/build_home.py`: builds the portal homepage.
+- `tools/build_home.py`, `tools/update_home.py`: build the portal homepage and refresh its figures from the trustee report each week.
 - `manifest.json`: last-updated time of each page (no content).
 - `tools/encrypt.py`: encrypts a page or the spreadsheet (`EH_PAGES_PASSWORD=... python3 tools/encrypt.py in out.enc`).
 

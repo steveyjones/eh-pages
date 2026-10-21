@@ -31,6 +31,11 @@ x = os.path.join(work, 'budget.xlsx')
 if os.path.exists(x):
     nm = os.environ.get('EH_XLSX_NAME', 'EH budget.xlsx')
     enc(x, 'budget-xlsx.enc', '--name', nm); done.append('spreadsheet')
+rp = os.path.join(work, 'report.html')
+if os.path.exists(rp) and os.path.getsize(rp) > 1000:
+    hp = os.path.join(work, 'home-built.html')
+    subprocess.run([py, os.path.join(tools, 'update_home.py'), rp, hp], check=True)
+    enc(hp, 'home.enc'); done.append('home')
 print('refreshed:', ', '.join(done) or 'nothing')
 
 # manifest of last-updated times (no content), used for the "Updated" stamps

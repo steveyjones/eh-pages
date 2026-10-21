@@ -157,6 +157,7 @@ footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);fon
 
   <footer><span>Epiphany House, Truro · private to trustees and Co-Leads</span><span>Figures to {e(data["data_to"])}</span></footer>
 </main>
+<script type="application/json" id="home-data">{html.escape(json.dumps(data, ensure_ascii=False))}</script>
 <script>
 (function(){{var el=document.querySelector('[data-meet]');if(!el)return;var d=new Date(el.getAttribute('data-meet'));
 var now=new Date();var days=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5);

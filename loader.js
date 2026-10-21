@@ -110,4 +110,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
   // GHL can render custom code late
   setTimeout(init, 1000); setTimeout(init, 3000);
+  try { new MutationObserver(function () { init(); }).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
 })();

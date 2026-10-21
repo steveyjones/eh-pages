@@ -32,3 +32,14 @@ if os.path.exists(x):
     nm = os.environ.get('EH_XLSX_NAME', 'EH budget.xlsx')
     enc(x, 'budget-xlsx.enc', '--name', nm); done.append('spreadsheet')
 print('refreshed:', ', '.join(done) or 'nothing')
+
+# manifest of last-updated times (no content), used for the "Updated" stamps
+import json, glob
+mf = {}
+for p in glob.glob(os.path.join(repo, '*.enc')):
+    name = os.path.basename(p)[:-4]
+    if name.endswith('-xlsx'): continue
+    try: mf[name] = json.load(open(p)).get('u')
+    except Exception: pass
+json.dump(mf, open(os.path.join(repo, 'manifest.json'), 'w'), indent=1, sort_keys=True)
+print('manifest:', ', '.join(sorted(mf)))

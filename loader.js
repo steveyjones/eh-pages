@@ -1,20 +1,26 @@
 /* Epiphany House pages loader.
    Put this in a GHL custom code element:
-     <div class="eh-page" data-page="budget"></div>
+     <div class="eh-page" data-page="home"></div>
      <script src="https://steveyjones.github.io/eh-pages/loader.js"></script>
-   data-page is budget, report or plan. Content is fetched fresh and decrypted in the browser. */
+   data-page is the page shown first: home, budget, report, plan, bplan, events or feasibility.
+   Links between pages open in place, so one GHL page with data-page="home" is the whole portal.
+   Content is fetched fresh and decrypted in the browser; the password is asked once per browser session. */
 (function () {
   var BASE = window.EH_PAGES_BASE || 'https://steveyjones.github.io/eh-pages/';
   var PAGES = {
-    budget: { title: 'Epiphany House Budget', file: 'budget.enc', xlsx: 'budget-xlsx.enc' },
-    report: { title: 'EH Trustee Report', file: 'report.enc' },
-    plan:   { title: 'EH Workplan', file: 'plan.enc' }
+    home:        { title: 'Trustee portal', file: 'home.enc' },
+    budget:      { title: 'Budget', file: 'budget.enc', xlsx: 'budget-xlsx.enc' },
+    report:      { title: 'Trustee report', file: 'report.enc' },
+    plan:        { title: 'Workplan', file: 'plan.enc' },
+    bplan:       { title: 'Business plan', file: 'bplan.enc' },
+    events:      { title: 'Premium events plan', file: 'events.enc' },
+    feasibility: { title: 'Feasibility study', file: 'feasibility.enc' }
   };
   var KEYNAME = 'eh-pages-pw';
 
   function b64(s) { var r = atob(s), u = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) u[i] = r.charCodeAt(i); return u; }
   function ss(get, v) { try { if (get) return sessionStorage.getItem(KEYNAME); if (v === null) sessionStorage.removeItem(KEYNAME); else sessionStorage.setItem(KEYNAME, v); } catch (e) { return null; } }
-  function fetchEnc(file) {
+  function fetchJson(file) {
     return fetch(BASE + file + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) {
       if (!r.ok) throw new Error('fetch ' + r.status); return r.json();
     });
@@ -25,85 +31,131 @@
     }).then(function (key) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(enc.i) }, key, b64(enc.c)); });
   }
   function fmtDate(u) { try { return new Date(u).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } }
+  var manifestP = null;
+  function manifest() { if (!manifestP) manifestP = fetchJson('manifest.json').catch(function () { return {}; }); return manifestP; }
 
-  var CSS = '.eh-gate{display:flex;justify-content:center;padding:48px 16px;font-family:Inter,Arial,sans-serif}' +
-    '.eh-gate form{width:100%;max-width:360px;background:#fff;border:1px solid #e3e6ea;border-radius:12px;padding:28px 24px;box-shadow:0 8px 28px rgba(31,58,77,.12);box-sizing:border-box;color:#1f2328}' +
-    '.eh-gate h2{margin:0 0 6px;font-family:"Source Serif 4",Georgia,serif;font-weight:400;font-size:1.5rem}' +
+  var CSS = '.eh-gate{display:flex;justify-content:center;padding:48px 16px;font-family:Jost,Inter,Arial,sans-serif}' +
+    '.eh-gate form{width:100%;max-width:360px;background:#fff;border:1px solid #e3e6ea;border-radius:14px;padding:28px 24px;box-shadow:0 10px 30px rgba(31,52,66,.12);box-sizing:border-box;color:#1f2328}' +
+    '.eh-gate h2{margin:0 0 6px;font-family:Fraunces,"Source Serif 4",Georgia,serif;font-weight:400;font-size:1.5rem}' +
     '.eh-gate p{margin:0 0 16px;font-size:.875rem;color:#5f6670}' +
     '.eh-gate label{display:block;font-size:.8125rem;margin-bottom:6px;color:#5f6670}' +
     '.eh-gate input{width:100%;box-sizing:border-box;padding:10px 12px;font:inherit;border:1px solid #c5cad1;border-radius:8px;margin-bottom:12px}' +
-    '.eh-gate button{width:100%;padding:11px;font:inherit;font-weight:600;color:#fff;background:#1F3A4D;border:0;border-radius:8px;cursor:pointer}' +
+    '.eh-gate button{width:100%;padding:11px;font:inherit;font-weight:600;color:#fff;background:#1f3442;border:0;border-radius:8px;cursor:pointer}' +
     '.eh-gate button:disabled{opacity:.7;cursor:wait}' +
     '.eh-gate .eh-msg{min-height:1.2em;margin-top:10px;font-size:.8125rem;color:#b42318}' +
     '.eh-frame{display:block;width:100%;border:0;min-height:400px}' +
-    '.eh-upd{font:12px Inter,Arial,sans-serif;color:#5f6670;text-align:right;padding:4px 8px}';
+    '.eh-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#1f3442;color:#f0efed;font:14px Jost,Inter,Arial,sans-serif}' +
+    '.eh-bar button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;border:1px solid rgba(240,239,237,.3);font-size:13px}' +
+    '.eh-bar button:hover{background:rgba(240,239,237,.1)} .eh-bar b{font-weight:500} .eh-bar span{margin-left:auto;font-size:12px;opacity:.7}' +
+    '.eh-upd{font:12px Jost,Inter,Arial,sans-serif;color:#5f6670;text-align:right;padding:4px 8px}' +
+    '.eh-load{font:14px Jost,Inter,Arial,sans-serif;color:#5f6670;padding:24px}';
 
   function addCss() {
     if (document.getElementById('eh-pages-css')) return;
     var s = document.createElement('style'); s.id = 'eh-pages-css'; s.textContent = CSS; document.head.appendChild(s);
   }
 
-  function show(el, cfg, html, pw, updated) {
-    el.innerHTML = '';
-    var f = document.createElement('iframe');
-    f.className = 'eh-frame'; f.title = cfg.title; f.setAttribute('scrolling', 'no');
-    el.appendChild(f);
-    var upd = document.createElement('div'); upd.className = 'eh-upd'; upd.textContent = 'Updated ' + fmtDate(updated);
-    el.appendChild(upd);
-    function size() { try { var d = f.contentDocument; if (d && d.documentElement) f.style.height = Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0) + 'px'; } catch (e) {} }
-    f.addEventListener('load', function () {
-      size();
-      try {
-        var d = f.contentDocument;
-        if (window.ResizeObserver && d.body) new ResizeObserver(size).observe(d.body);
-        setTimeout(size, 400); setTimeout(size, 1500);
-        // links open outside the frame
-        Array.prototype.forEach.call(d.querySelectorAll('a[href^="http"]'), function (a) { if (!a.target) a.target = '_blank'; });
-        var dl = d.getElementById('eh-dl');
-        if (dl && cfg.xlsx) dl.addEventListener('click', function (e) {
-          e.preventDefault(); var old = dl.textContent; dl.textContent = 'Preparing download…';
-          fetchEnc(cfg.xlsx).then(function (enc) {
-            return decrypt(enc, pw).then(function (bytes) {
-              var url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-              var a = document.createElement('a'); a.href = url; a.download = enc.name || 'EH budget.xlsx';
-              document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
-            });
-          }).catch(function (err) { console.error(err); }).then(function () { dl.textContent = old; });
-        });
-      } catch (e) { console.error(e); }
-    });
-    window.addEventListener('resize', size);
-    f.srcdoc = html;
-  }
-
   function mount(el) {
     if (el.getAttribute('data-eh-done')) return; el.setAttribute('data-eh-done', '1');
-    var cfg = PAGES[el.getAttribute('data-page')];
-    if (!cfg) { el.textContent = 'Unknown page.'; return; }
+    var start = el.getAttribute('data-page');
+    if (!PAGES[start]) { el.textContent = 'Unknown page.'; return; }
     addCss();
-    var encP = fetchEnc(cfg.file);
-    function attempt(pw) {
-      return encP.then(function (enc) {
-        return decrypt(enc, pw).then(function (buf) { ss(false, pw); show(el, cfg, new TextDecoder().decode(buf), pw, enc.u); });
+    var portal = start === 'home';
+    var pw = null, current = null;
+
+    function wanted() { var h = (location.hash || '').slice(1); return portal && PAGES[h] ? h : start; }
+
+    function show(name, html, updated) {
+      var cfg = PAGES[name];
+      el.innerHTML = '';
+      if (portal && name !== 'home') {
+        var bar = document.createElement('div'); bar.className = 'eh-bar';
+        bar.innerHTML = '<button type="button">← Trustee home</button><b></b><span></span>';
+        bar.querySelector('b').textContent = cfg.title;
+        bar.querySelector('span').textContent = updated ? 'Updated ' + fmtDate(updated) : '';
+        bar.querySelector('button').addEventListener('click', function () { go('home'); });
+        el.appendChild(bar);
+      }
+      var f = document.createElement('iframe');
+      f.className = 'eh-frame'; f.title = cfg.title; f.setAttribute('scrolling', 'no');
+      el.appendChild(f);
+      if (!portal) { var upd = document.createElement('div'); upd.className = 'eh-upd'; upd.textContent = 'Updated ' + fmtDate(updated); el.appendChild(upd); }
+      function size() { try { var d = f.contentDocument; if (d && d.documentElement) f.style.height = Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0) + 'px'; } catch (e) {} }
+      f.addEventListener('load', function () {
+        size();
+        try {
+          var d = f.contentDocument;
+          if (window.ResizeObserver && d.body) new ResizeObserver(size).observe(d.body);
+          setTimeout(size, 400); setTimeout(size, 1500);
+          // links to other pages open in place; outside links open in a new tab
+          d.addEventListener('click', function (e) {
+            var a = e.target.closest && e.target.closest('[data-go]');
+            if (a && PAGES[a.getAttribute('data-go')]) { e.preventDefault(); go(a.getAttribute('data-go')); }
+          });
+          Array.prototype.forEach.call(d.querySelectorAll('a[href^="http"]'), function (a) { if (!a.target) a.target = '_blank'; });
+          // updated dates on the home page
+          manifest().then(function (mf) {
+            Array.prototype.forEach.call(d.querySelectorAll('[data-updated]'), function (s) { var u = mf[s.getAttribute('data-updated')]; if (u) s.textContent = fmtDate(u); });
+          });
+          var dl = d.getElementById('eh-dl');
+          if (dl && cfg.xlsx) dl.addEventListener('click', function (e) {
+            e.preventDefault(); var old = dl.textContent; dl.textContent = 'Preparing download…';
+            fetchJson(cfg.xlsx).then(function (enc) {
+              return decrypt(enc, pw).then(function (bytes) {
+                var url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+                var a = document.createElement('a'); a.href = url; a.download = enc.name || 'EH budget.xlsx';
+                document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+              });
+            }).catch(function (err) { console.error(err); }).then(function () { dl.textContent = old; });
+          });
+        } catch (e) { console.error(e); }
       });
+      window.addEventListener('resize', size);
+      f.srcdoc = html;
+    }
+
+    function load(name) {
+      current = name;
+      el.innerHTML = '<p class="eh-load">Loading…</p>';
+      return fetchJson(PAGES[name].file).then(function (enc) {
+        return decrypt(enc, pw).then(function (buf) {
+          if (current !== name) return;
+          show(name, new TextDecoder().decode(buf), enc.u);
+          if (portal) { var top = el.getBoundingClientRect().top + window.pageYOffset; if (window.pageYOffset > top) window.scrollTo(0, Math.max(0, top - 10)); }
+        });
+      });
+    }
+
+    function go(name) {
+      if (portal) {
+        var h = name === 'home' ? '' : name;
+        if ((location.hash || '').slice(1) !== h) { history.pushState(null, '', h ? '#' + h : location.pathname + location.search); }
+      }
+      load(name).catch(function (err) { el.innerHTML = '<p class="eh-load">Could not load this page. Refresh to try again.</p>'; console.error(err); });
+    }
+
+    if (portal) window.addEventListener('popstate', function () { if (pw) load(wanted()).catch(function () {}); });
+
+    function attempt(p) {
+      pw = p;
+      return load(wanted()).then(function () { ss(false, p); });
     }
     function gate(msg) {
       el.innerHTML = '<div class="eh-gate"><form autocomplete="off"><h2></h2><p>For trustees and Co-Leads. Enter the password to view.</p>' +
         '<label>Password</label><input type="password" required><button type="submit">Open</button><div class="eh-msg" aria-live="polite"></div></form></div>';
-      el.querySelector('h2').textContent = cfg.title;
+      el.querySelector('h2').textContent = portal ? 'Epiphany House trustees' : PAGES[start].title;
       var form = el.querySelector('form'), input = el.querySelector('input'), btn = el.querySelector('button'), m = el.querySelector('.eh-msg');
       if (msg) m.textContent = msg;
       form.addEventListener('submit', function (e) {
         e.preventDefault(); btn.disabled = true; btn.textContent = 'Checking…'; m.textContent = '';
         attempt(input.value.trim()).catch(function (err) {
-          btn.disabled = false; btn.textContent = 'Open';
-          m.textContent = /fetch/.test(String(err && err.message)) ? 'Could not load the page. Check your connection and refresh.' : 'That password is not right. Try again.';
-          input.select();
+          gate(/fetch/.test(String(err && err.message)) ? 'Could not load the page. Check your connection and refresh.' : 'That password is not right. Try again.');
         });
       });
+      input.focus();
     }
     var saved = ss(true);
-    if (saved) { el.innerHTML = '<p style="font:14px Inter,Arial,sans-serif;color:#5f6670;padding:24px">Loading…</p>'; attempt(saved).catch(function () { ss(false, null); gate(); }); } else gate();
+    if (saved) attempt(saved).catch(function () { ss(false, null); pw = null; gate(); }); else gate();
   }
 
   function init() { Array.prototype.forEach.call(document.querySelectorAll('.eh-page'), mount); }

@@ -25,7 +25,7 @@ bars = ''.join(
     f'<div class="fb{" past" if past else ""}{" low" if (not past and v < 1300) else ""}" style="--h:{v / scale * 100:.1f}%">'
     f'<b>£{v / 1000:.1f}k</b><i></i><span>{e(mo)}</span></div>' for mo, v, past in data.get('forward', []))
 decisions = ''.join(
-    f'<li><span class="tag t-{e(t.lower())}">{e(t)}</span><div><strong>{e(h)}</strong><p>{e(p)}</p></div></li>'
+    f'<li><span class="tag t-{e(t.lower())}">{e(t)}</span><div><strong>{e(h)}</strong>{"<p>" + e(p) + "</p>" if p else ""}</div></li>'
     for t, h, p in data.get('decisions', []))
 papers = ''.join(
     f'<a class="paper" href="#{p["go"]}" data-go="{p["go"]}"><span class="ic">{ICONS.get(p["icon"], "")}</span>'

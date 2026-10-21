@@ -97,7 +97,7 @@ if k and m:
 m = re.search(r'sign-off on (\d+ \w+) \((\d+)\) and the other half in (\w+) \((\d+)\)', section('policies'))
 k = kpi('Policies to sign off')
 if k and m:
-    k['v'] = m.group(2); k['sub'] = f'On {m.group(1)}, with the other {m.group(4)} in {m.group(3)}'
+    k['v'] = f'{m.group(2)}/{int(m.group(2)) + int(m.group(4))}'; k['sub'] = f'{m.group(2)} on {m.group(1)}, the other {m.group(4)} in {m.group(3)}'
 
 # trustee asks (section 8): everything except notes
 asks = re.findall(r'<span class="tag">(\w+)</span><br><strong>(.*?)</strong><p>(.*?)</p>', section('asks'), re.S)

@@ -60,8 +60,19 @@
     var s = document.createElement('style'); s.id = 'eh-pages-css'; s.textContent = CSS; document.head.appendChild(s);
   }
 
+  // stretch the element to the full window width, whatever column GHL puts it in
+  function bleed(el) {
+    function fit() {
+      el.style.marginLeft = '0px'; el.style.width = '';
+      var w = document.documentElement.clientWidth, left = el.getBoundingClientRect().left;
+      el.style.width = w + 'px'; el.style.marginLeft = (-left) + 'px'; el.style.maxWidth = 'none';
+    }
+    fit(); window.addEventListener('resize', fit); setTimeout(fit, 500); setTimeout(fit, 2000);
+  }
+
   function mount(el) {
     if (el.getAttribute('data-eh-done')) return; el.setAttribute('data-eh-done', '1');
+    if (el.getAttribute('data-full') !== 'off') bleed(el);
     var start = el.getAttribute('data-page');
     if (!PAGES[start]) { el.textContent = 'Unknown page.'; return; }
     addCss();

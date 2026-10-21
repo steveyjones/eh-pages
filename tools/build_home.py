@@ -59,7 +59,7 @@ page = f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta n
 *{{box-sizing:border-box}}
 html,body{{margin:0;background:var(--paper);color:var(--fg);font-family:var(--body);font-weight:350;font-size:16px;line-height:1.55}}
 a{{color:inherit;text-decoration:none}}
-.wrap{{max-width:1120px;margin:0 auto;padding:0 20px}}
+.wrap{{max-width:1280px;margin:0 auto;padding:0 20px}}
 /* hero */
 .hero{{background:var(--ink);color:#f0efed;position:relative;overflow:hidden;padding:36px 0 120px}}
 .hero::before,.hero::after{{content:"";position:absolute;border-radius:50%;border:1px solid rgba(220,161,60,.35);pointer-events:none}}

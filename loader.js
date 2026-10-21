@@ -2,7 +2,7 @@
    Put this in a GHL custom code element:
      <div class="eh-page" data-page="home"></div>
      <script src="https://steveyjones.github.io/eh-pages/loader.js"></script>
-   data-page is the page shown first: home, budget, report, plan, bplan, events or feasibility.
+   data-page is the page shown first: home, budget, report or plan.
    Links between pages open in place, so one GHL page with data-page="home" is the whole portal.
    Content is fetched fresh and decrypted in the browser; the password is asked once per browser session. */
 (function () {
@@ -11,10 +11,7 @@
     home:        { title: 'Trustee portal', file: 'home.enc' },
     budget:      { title: 'Budget', file: 'budget.enc', xlsx: 'budget-xlsx.enc' },
     report:      { title: 'Trustee report', file: 'report.enc' },
-    plan:        { title: 'Workplan', file: 'plan.enc' },
-    bplan:       { title: 'Business plan', file: 'bplan.enc' },
-    events:      { title: 'Premium events plan', file: 'events.enc' },
-    feasibility: { title: 'Feasibility study', file: 'feasibility.enc' }
+    plan:        { title: 'Workplan', file: 'plan.enc' }
   };
   var KEYNAME = 'eh-pages-pw';
 

@@ -18,24 +18,37 @@ ARROW = '<svg class="arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h
 m = data['meeting']
 kpis = ''.join(
     f'<a class="kpi {k["tone"]}" href="#{k["go"]}" data-go="{k["go"]}"><span class="kk">{e(k["k"])}</span>'
-    f'<span class="kv">{e(k["v"])}</span><span class="ks">{e(k["sub"])}</span></a>' for k in data['kpis'])
-top = max(v for _, v, _ in data['forward'])
+    f'<span class="kv">{e(k["v"])}</span><span class="ks">{e(k["sub"])}</span></a>' for k in data.get('kpis', []))
+top = max([v for _, v, _ in data.get('forward', [])] or [1])
 scale = 4000 if top <= 4000 else (int(top / 1000) + 1) * 1000
 bars = ''.join(
     f'<div class="fb{" past" if past else ""}{" low" if (not past and v < 1300) else ""}" style="--h:{v / scale * 100:.1f}%">'
-    f'<b>£{v / 1000:.1f}k</b><i></i><span>{e(mo)}</span></div>' for mo, v, past in data['forward'])
+    f'<b>£{v / 1000:.1f}k</b><i></i><span>{e(mo)}</span></div>' for mo, v, past in data.get('forward', []))
 decisions = ''.join(
     f'<li><span class="tag t-{e(t.lower())}">{e(t)}</span><div><strong>{e(h)}</strong><p>{e(p)}</p></div></li>'
-    for t, h, p in data['decisions'])
+    for t, h, p in data.get('decisions', []))
 papers = ''.join(
     f'<a class="paper" href="#{p["go"]}" data-go="{p["go"]}"><span class="ic">{ICONS.get(p["icon"], "")}</span>'
     f'<span class="pk">{e(p["kicker"])}</span><span class="pt">{e(p["title"])}</span><span class="pd">{e(p["desc"])}</span>'
     f'<span class="pu">Updated <span data-updated="{p["go"]}">—</span>{ARROW}</span></a>' for p in data['papers'])
 library = ''.join(
     f'<a class="lib" href="#{l["go"]}" data-go="{l["go"]}"><span class="lt">{e(l["title"])}</span>'
-    f'<span class="ld">{e(l["desc"])}</span><span class="lg">{e(l["tag"])}</span></a>' for l in data['library'])
+    f'<span class="ld">{e(l["desc"])}</span><span class="lg">{e(l["tag"])}</span></a>' for l in data.get('library', []))
 coming = ''.join(f'<li>{e(c)}</li>' for c in data.get('coming', []))
 later = ' · '.join(e(x) for x in data.get('later_meetings', []))
+extra = ''
+if data.get('forward'):
+    extra = f'''  <section class="grid2">
+    <div class="card"><h3>Room hire in the diary</h3><p class="small muted" style="margin:0">Listed paid hire by month, from Checkfront. CotE and EH's own use are not charged.</p>
+      <div class="fwd" role="img" aria-label="Listed paid hire by month">{bars}</div>
+      <div class="legend"><span><i style="background:var(--ink)"></i>This report</span><span><i style="background:var(--navy)"></i>Booked ahead</span><span><i style="background:var(--gold)"></i>Under £1,300 a month</span></div></div>
+    <div class="card"><h3>For the trustees on {e(m["label"].split(" ",1)[1])}</h3><p class="small muted" style="margin:0">From section 8 of the report.</p><ul class="dec">{decisions}</ul></div>
+  </section>
+
+  <section><h2>Background papers <span class="rule"></span></h2><div class="libs">{library}</div>
+  <div class="coming">Being added: <ul>{coming}</ul></div></section>
+
+'''
 
 page = f'''<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Epiphany House · Trustees</title>
@@ -66,6 +79,7 @@ h1 em{{font-style:italic;color:var(--gold)}}
 .count small{{display:block;font-family:var(--body);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(240,239,237,.65);margin-top:6px}}
 .mt{{font-weight:500}} .ms{{font-size:.88rem;color:rgba(240,239,237,.7)}}
 /* kpis */
+.lift{{margin-top:-84px;position:relative;z-index:2}}
 .kpis{{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:-84px;position:relative;z-index:2}}
 .kpi{{display:flex;flex-direction:column;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px 20px;box-shadow:0 10px 30px rgba(31,52,66,.08);transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}}
 .kpi::before{{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--navy)}}
@@ -136,19 +150,11 @@ footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);fon
   <div class="ms">Then {later}</div></div>
 </div></header>
 <main class="wrap">
-  <div class="kpis">{kpis}</div>
+  {'<div class="kpis">'+kpis+'</div>' if kpis else ''}
 
-  <section><h2>The three papers <span class="rule"></span></h2><div class="papers">{papers}</div></section>
+  <section class="{'' if kpis else 'lift'}">{'<h2>The three papers <span class="rule"></span></h2>' if kpis else ''}<div class="papers">{papers}</div></section>
 
-  <section class="grid2">
-    <div class="card"><h3>Room hire in the diary</h3><p class="small muted" style="margin:0">Listed paid hire by month, from Checkfront. CotE and EH's own use are not charged.</p>
-      <div class="fwd" role="img" aria-label="Listed paid hire by month">{bars}</div>
-      <div class="legend"><span><i style="background:var(--ink)"></i>This report</span><span><i style="background:var(--navy)"></i>Booked ahead</span><span><i style="background:var(--gold)"></i>Under £1,300 a month</span></div></div>
-    <div class="card"><h3>For the trustees on {e(m["label"].split(" ",1)[1])}</h3><p class="small muted" style="margin:0">From section 8 of the report.</p><ul class="dec">{decisions}</ul></div>
-  </section>
-
-  <section><h2>Background papers <span class="rule"></span></h2><div class="libs">{library}</div>
-  <div class="coming">Being added: <ul>{coming}</ul></div></section>
+  {extra}
 
   <footer><span>Epiphany House, Truro · private to trustees and Co-Leads</span><span>Figures to {e(data["data_to"])}</span></footer>
 </main>

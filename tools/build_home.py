@@ -53,6 +53,11 @@ keyinfo = ''.join(
     for i, (h, go, auto) in enumerate(KEYINFO, 1))
 report_meeting = data.get('report_meeting', '')
 coming = ''.join(f'<li>{e(c)}</li>' for c in data.get('coming', []))
+gn = data.get('good_news', [])
+good = ''.join(f'<li{" class=on" if i == 0 else ""}><blockquote>{e(g["q"])}</blockquote><span><b>{e(g["who"])}</b> · {e(g["when"])}</span></li>' for i, g in enumerate(gn))
+goodpanel = (f'<aside class="gnews" aria-label="Good news"><div class="gk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z"/></svg>Good news</div>'
+             f'<ul>{good}</ul>' + (f'<div class="gdots">' + ''.join(f'<button type="button" aria-label="Story {i+1}"{" class=on" if i == 0 else ""}></button>' for i in range(len(gn))) + '</div>' if len(gn) > 1 else '') +
+             '<a class="gmore" href="#report" data-go="report">More in the trustee report</a></aside>') if gn else ''
 later = ' · '.join(e(x) for x in data.get('later_meetings', []))
 extra = ''
 if data.get('forward'):
@@ -159,6 +164,21 @@ h2 .rule{{flex:1;height:1px;background:var(--line);transform:translateY(-6px)}}
 .kh{{font-weight:600;font-size:1.05rem;border-bottom:1px solid transparent}} .kh:hover{{border-color:var(--navy)}}
 .keyinfo p{{margin:4px 0 0;font-size:.95rem;line-height:1.45}}
 .kpis.after{{margin-top:22px}}
+.herogrid{{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,380px);gap:36px;align-items:end}}
+html:not(.eh-in-portal) .toprow{{padding-right:96px}}
+.gnews{{position:relative;background:rgba(240,239,237,.07);border:1px solid rgba(220,161,60,.35);border-radius:16px;padding:18px 20px 16px;color:#f0efed;backdrop-filter:blur(4px)}}
+.gk{{display:flex;align-items:center;gap:8px;font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:500}}
+.gk svg{{width:15px;height:15px;fill:none;stroke:var(--gold);stroke-width:2;stroke-linejoin:round}}
+.gnews ul{{list-style:none;margin:10px 0 0;padding:0;display:grid}}
+.gnews li{{grid-area:1/1;opacity:0;visibility:hidden;transition:opacity .6s}}
+.gnews li.on{{opacity:1;visibility:visible}}
+.gnews blockquote{{margin:0;font-family:var(--display);font-weight:300;font-size:1.3rem;line-height:1.3}}
+.gnews li span{{display:block;margin-top:8px;font-size:.84rem;color:rgba(240,239,237,.72)}} .gnews li b{{color:#f0efed;font-weight:500}}
+.gdots{{display:flex;gap:6px;margin-top:12px}}
+.gdots button{{all:unset;cursor:pointer;width:8px;height:8px;border-radius:50%;background:rgba(240,239,237,.3)}} .gdots button.on{{background:var(--gold)}}
+.gmore{{display:inline-block;margin-top:10px;font-size:.8rem;color:rgba(240,239,237,.75);border-bottom:1px solid rgba(240,239,237,.3)}} .gmore:hover{{color:#fff}}
+@media (max-width:900px){{.herogrid{{grid-template-columns:1fr;gap:22px}}}}
+@media print{{.gnews li{{opacity:1!important;visibility:visible!important;grid-area:auto!important;margin-bottom:8pt}}.gdots,.gmore{{display:none!important}}.gnews{{border:1pt solid #000!important}}.herogrid{{grid-template-columns:1fr!important}}}}
 footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}}
 :focus-visible{{outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}}
 @media (max-width:900px){{.kpis,.papers{{grid-template-columns:1fr 1fr}}.libs{{grid-template-columns:1fr 1fr}}.grid2{{grid-template-columns:1fr}}}}
@@ -168,11 +188,13 @@ footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);fon
 <header class="hero"><div class="wrap">
   <div class="toprow"><img class="logo" src="{logo}" alt="Epiphany House">
   <span class="private"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Trustees and Co-Leads only</span></div>
+  <div class="herogrid"><div class="herol">
   <div class="eyebrow">Trustee portal</div>
   <h1>The house, <em>at a glance</em></h1>
   <div class="meet" data-meet="{e(m["iso"])}"><div class="count"><span id="cd">–</span><small id="cdl">days to go</small></div>
   <div class="mt">Next meeting: {e(m["label"])}, {e(m["time"])}, {e(m["place"])}</div>
   <div class="ms">Then {later}</div></div>
+  </div>{goodpanel}</div>
 </div></header>
 <main class="wrap">
   <section class="keyinfo" aria-labelledby="ki"><h2 id="ki">Key information</h2><ol>{keyinfo}</ol></section>
@@ -187,6 +209,10 @@ footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);fon
 </main>
 <script type="application/json" id="home-data">{html.escape(json.dumps(data, ensure_ascii=False))}</script>
 <script>
+(function(){{var g=document.querySelector('.gnews');if(!g)return;var it=g.querySelectorAll('li'),dots=g.querySelectorAll('.gdots button'),i=0,t;if(it.length<2)return;
+function show(n){{it[i].classList.remove('on');if(dots[i])dots[i].classList.remove('on');i=n;it[i].classList.add('on');if(dots[i])dots[i].classList.add('on')}}
+function go(){{clearInterval(t);if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)t=setInterval(function(){{show((i+1)%it.length)}},7000)}}
+dots.forEach(function(d,n){{d.addEventListener('click',function(){{show(n);go()}})}});go();}})();
 (function(){{var el=document.querySelector('[data-meet]');if(!el)return;var d=new Date(el.getAttribute('data-meet'));
 var now=new Date();var days=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5);
 var c=document.getElementById('cd'),l=document.getElementById('cdl');

@@ -104,6 +104,11 @@ k = kpi('Policies to sign off')
 if k and m:
     k['v'] = f'{m.group(2)}/{int(m.group(2)) + int(m.group(4))}'; k['sub'] = f'{m.group(2)} on {m.group(1)}, the other {m.group(4)} in {m.group(3)}'
 
+# good news: quotes from the report's Good news section
+stories = re.findall(r'<figure class="story"><blockquote>(.*?)</blockquote><figcaption><b>(.*?)</b>\s*·\s*(.*?)</figcaption>', section('goodnews'), re.S)
+if stories: data['good_news'] = [{'q': text(q), 'who': text(w), 'when': text(t)} for q, w, t in stories]
+else: notes.append('good news not read; kept')
+
 # trustee asks (section 8): everything except notes
 asks = re.findall(r'<span class="tag">(\w+)</span><br><strong>(.*?)</strong><p>(.*?)</p>', section('asks'), re.S)
 dec = []

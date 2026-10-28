@@ -109,6 +109,19 @@ stories = re.findall(r'<figure class="story"><blockquote>(.*?)</blockquote><figc
 if stories: data['good_news'] = [{'q': text(q), 'who': text(w), 'when': text(t)} for q, w, t in stories]
 else: notes.append('good news not read; kept')
 
+# task reporting: the report carries a small data block, refreshed every week by the scheduled task
+m = re.search(r'<script type="application/json" id="eh-activity">(.*?)</script>', r, re.S)
+if m:
+    try:
+        new = json.loads(m.group(1)); old_a = data.get('activity', {})
+        # never lower a running total because of a bad read
+        for f in ('tasks', 'emails', 'new_contacts'):
+            if isinstance(old_a.get(f), int) and isinstance(new.get(f), int) and new[f] < old_a[f] and new.get('from') == old_a.get('from'):
+                notes.append(f'activity {f} lower than before ({new[f]} < {old_a[f]}); kept'); new[f] = old_a[f]
+        data['activity'] = new
+    except Exception as ex: notes.append(f'activity not read: {ex}')
+else: notes.append('activity block not in report; kept')
+
 # trustee asks (section 8): everything except notes
 asks = re.findall(r'<span class="tag">(\w+)</span><br><strong>(.*?)</strong><p>(.*?)</p>', section('asks'), re.S)
 dec = []

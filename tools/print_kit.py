@@ -64,14 +64,25 @@ html.eh-in-portal .eh-printbtn{display:none}
  .eh-seg button[aria-pressed="true"]{outline:2pt solid #000 !important;outline-offset:-2pt;font-weight:700 !important;text-decoration:underline}
  .eh-cover-track{border:1pt solid #000 !important}
  .eh-cover-tick{background:#000 !important}
+ /* single-series bars redrawn by the page after the print patterns are applied: plain black */
+ .eh-mini-bar,.eh-cellbar{background:#000 !important}
  svg text{fill:#000 !important}
  svg line,svg .domain,svg .tick line{stroke:#000 !important}
  .eh-chart text,.eh-chart svg text{font-size:14px !important}
+ /* side-by-side cards stack in print, so wide tables never run into the next card */
+ .eh-grid,.grid2,.cols{display:block !important}
+ .eh-grid>*,.grid2>*,.cols>*{width:auto !important;max-width:none !important;margin:0 0 12pt !important}
+ .eh-table,table{width:100% !important;table-layout:auto !important}
+ .eh-table th,.eh-table td{white-space:normal !important;min-width:0 !important;overflow-wrap:break-word;word-break:normal !important;font-size:10.5pt !important;padding:3pt 5pt !important}
+ .eh-table td.eh-r{white-space:nowrap !important}
+ .eh-table th.eh-r{white-space:normal !important}
+ .eh-table .eh-basis{width:45% !important}
+ .eh-tablewrap{max-height:none !important}
  /* page breaks */
  h1,h2,h3,.strand,.hd{break-after:avoid;page-break-after:avoid}
- tr,li,.tile,.kpi,.paper,.lib,.card,.chart,.agenda>div,.ask>div,.rhythm>div,.eh-tile,.eh-card,.keyinfo li,.pj,.c,figure{break-inside:avoid;page-break-inside:avoid}
+ tr,li,.tile,.kpi,.paper,.lib,.card,.chart,.agenda>div,.ask>div,.rhythm>div,.eh-tile,.keyinfo li,.pj,.c,figure{break-inside:avoid;page-break-inside:avoid}
  thead{display:table-header-group}
- section{break-inside:auto}
+ section,.eh-card{break-inside:auto}
 }
 '''
 

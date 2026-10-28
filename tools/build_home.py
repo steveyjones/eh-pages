@@ -58,6 +58,20 @@ good = ''.join(f'<li{" class=on" if i == 0 else ""}><blockquote>{e(g["q"])}</blo
 goodpanel = (f'<aside class="gnews" aria-label="Good news"><div class="gk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z"/></svg>Good news</div>'
              f'<ul>{good}</ul>' + (f'<div class="gdots">' + ''.join(f'<button type="button" aria-label="Story {i+1}"{" class=on" if i == 0 else ""}></button>' for i in range(len(gn))) + '</div>' if len(gn) > 1 else '') +
              '<a class="gmore" href="#report" data-go="report">More in the trustee report</a></aside>') if gn else ''
+ACT_ICONS = {
+ 'tasks': '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12.5l2.8 2.8L16.5 9"/></svg>',
+ 'emails': '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z"/><path d="M3 7l9 6 9-6"/></svg>',
+ 'contacts': '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M3 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5M19 8v6M16 11h6"/></svg>',
+}
+a = data.get('activity')
+activity = ''
+if a:
+    tiles = [('tasks', 'Tasks completed', a.get('tasks'), f'Development and house tasks, {a.get("tasks_from", "4 October")} – {a.get("to", "")}'),
+             ('emails', 'Emails sent', a.get('emails'), f'From the shared inbox, {a.get("from", "1 October")} – {a.get("to", "")}'),
+             ('contacts', 'New contacts made', a.get('new_contacts'), f'People emailed for the first time, {a.get("from", "1 October")} – {a.get("to", "")}')]
+    activity = ('<section class="activity" aria-labelledby="act"><h2 id="act">Task reporting <span class="rule"></span></h2><div class="acts">' +
+        ''.join(f'<div class="act"><span class="ai">{ACT_ICONS[i]}</span><div><span class="kk">{e(k)}</span><span class="kv">{e(str(v)) if v is not None else "–"}</span>'
+                f'<span class="ks">{e(sub)}</span></div></div>' for i, k, v, sub in tiles) + '</div></section>')
 later = ' · '.join(e(x) for x in data.get('later_meetings', []))
 extra = ''
 if data.get('forward'):
@@ -179,10 +193,17 @@ html:not(.eh-in-portal) .toprow{{padding-right:96px}}
 .gmore{{display:inline-block;margin-top:10px;font-size:.8rem;color:rgba(240,239,237,.75);border-bottom:1px solid rgba(240,239,237,.3)}} .gmore:hover{{color:#fff}}
 @media (max-width:900px){{.herogrid{{grid-template-columns:1fr;gap:22px}}}}
 @media print{{.gnews li{{opacity:1!important;visibility:visible!important;grid-area:auto!important;margin-bottom:8pt}}.gdots,.gmore{{display:none!important}}.gnews{{border:1pt solid #000!important}}.herogrid{{grid-template-columns:1fr!important}}}}
+.activity{{margin-top:44px}}
+.acts{{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}}
+.act{{display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:start;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;padding:18px 20px 20px}}
+.act>div{{display:flex;flex-direction:column;gap:4px}}
+.ai{{width:52px;height:52px;border-radius:12px;background:var(--ink);display:grid;place-items:center}}
+.ai svg{{width:24px;height:24px;stroke:var(--gold);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}}
+@media print{{.ai{{display:none!important}}.act{{grid-template-columns:1fr!important;border:1pt solid #000!important;border-top:2pt solid #000!important}}.activity{{margin-top:14pt!important}}}}
 footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}}
 :focus-visible{{outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}}
-@media (max-width:900px){{.kpis,.papers{{grid-template-columns:1fr 1fr}}.libs{{grid-template-columns:1fr 1fr}}.grid2{{grid-template-columns:1fr}}}}
-@media (max-width:560px){{.kpis,.papers,.libs{{grid-template-columns:1fr}}.hero{{padding-bottom:100px}}.fwd{{gap:6px}}.fb b{{font-size:.62rem}}}}
+@media (max-width:900px){{.kpis,.papers,.acts{{grid-template-columns:1fr 1fr}}.libs{{grid-template-columns:1fr 1fr}}.grid2{{grid-template-columns:1fr}}}}
+@media (max-width:560px){{.kpis,.papers,.libs,.acts{{grid-template-columns:1fr}}.hero{{padding-bottom:100px}}.fwd{{gap:6px}}.fb b{{font-size:.62rem}}}}
 @media (prefers-reduced-motion:reduce){{*{{animation:none!important;transition:none!important}}}}
 </style></head><body>
 <header class="hero"><div class="wrap">
@@ -201,6 +222,8 @@ footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);fon
 
   {'<div class="kpis after">'+kpis+'</div>' if kpis else ''}
 
+  {activity}
+
   <section>{'<h2>The three papers <span class="rule"></span></h2>' if kpis else ''}<div class="papers">{papers}</div></section>
 
   {extra}
@@ -211,7 +234,7 @@ footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);fon
 <script>
 (function(){{var g=document.querySelector('.gnews');if(!g)return;var it=g.querySelectorAll('li'),dots=g.querySelectorAll('.gdots button'),i=0,t;if(it.length<2)return;
 function show(n){{it[i].classList.remove('on');if(dots[i])dots[i].classList.remove('on');i=n;it[i].classList.add('on');if(dots[i])dots[i].classList.add('on')}}
-function go(){{clearInterval(t);if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)t=setInterval(function(){{show((i+1)%it.length)}},7000)}}
+function go(){{clearInterval(t);if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)t=setInterval(function(){{show((i+1)%it.length)}},5000)}}
 dots.forEach(function(d,n){{d.addEventListener('click',function(){{show(n);go()}})}});go();}})();
 (function(){{var el=document.querySelector('[data-meet]');if(!el)return;var d=new Date(el.getAttribute('data-meet'));
 var now=new Date();var days=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5);

@@ -55,11 +55,11 @@ if m and year:
 money = section('money')
 rows = re.findall(r'<tr><td>(.*?)</td><td class="num">(.*?)</td><td>(.*?)</td></tr>', money)
 k = kpi('Year ahead')
-if k and len(rows) >= 4:
+if k and len(rows) >= 4 and 'Year ahead' not in data.get('kpi_lock', []):
     base, one, onev = rows[0][1], rows[1][1], rows[3][1]
     k['v'] = text(one)
     k['sub'] = f'With one more let at £660. Three residents alone: {text(base)}. One more let and the events: {text(onev)}.'
-else: notes.append('year-ahead table not read; kept')
+else: notes.append('year-ahead kept (locked or table not read)')
 
 # forward book (section 2)
 m = re.search(r'aria-label="Listed paid hire by month: ([^"]+)"', r)

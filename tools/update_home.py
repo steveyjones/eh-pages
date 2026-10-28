@@ -42,8 +42,13 @@ if m and year:
         d = datetime.datetime.strptime(f'{day} {mon[:3]} {year}', '%d %b %Y')
         hh = re.match(r'(\d+)(?:[.:](\d+))?\s*(am|pm)', tm)
         h = int(hh.group(1)) % 12 + (12 if hh and hh.group(3) == 'pm' else 0) if hh else 10
-        data['meeting'] = {'iso': d.strftime('%Y-%m-%dT') + f'{h:02d}:{int(hh.group(2) or 0) if hh else 0:02d}:00',
-                           'label': d.strftime('%A %-d %B'), 'time': tm, 'place': place}
+        found = {'iso': d.strftime('%Y-%m-%dT') + f'{h:02d}:{int(hh.group(2) or 0) if hh else 0:02d}:00',
+                 'label': d.strftime('%A %-d %B'), 'time': tm, 'place': place}
+        data['report_meeting'] = found['label']
+        # the report's own meeting only becomes "next meeting" if it is still ahead;
+        # otherwise the next meeting set on the homepage stays
+        if d.date() >= datetime.date.today():
+            data['meeting'] = found
     except Exception as ex: notes.append(f'meeting not read: {ex}')
 
 # year-ahead table (section 3): rows in a fixed order
@@ -112,6 +117,13 @@ for tag, head, para in asks:
     dec.append([tag, h.split(',')[0], first + ('' if first.endswith('…') else '.')])
 if dec: data['decisions'] = dec
 else: notes.append('trustee asks not read; kept')
+
+# dates moved since the report was written (e.g. a meeting replaced): applied to text taken from the report
+def fixdates(t):
+    for a, b2 in data.get('date_fix', {}).items(): t = t.replace(a, b2)
+    return t
+for k in data.get('kpis', []): k['sub'] = fixdates(k['sub'])
+data['decisions'] = [[t, fixdates(h), fixdates(p)] for t, h, p in data.get('decisions', [])]
 
 after = json.dumps(data, ensure_ascii=False, sort_keys=True)
 tmp = out + '.json'

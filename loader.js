@@ -44,7 +44,9 @@
     '.eh-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#1f3442;color:#f0efed;font:14px Jost,Inter,Arial,sans-serif}' +
     '.eh-bar button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;border:1px solid rgba(240,239,237,.3);font-size:13px}' +
     '.eh-bar button:hover{background:rgba(240,239,237,.1)} .eh-bar b{font-weight:500} .eh-bar span{margin-left:auto;font-size:12px;opacity:.7}' +
-    '.eh-upd{font:12px Jost,Inter,Arial,sans-serif;color:#5f6670;text-align:right;padding:4px 8px}' +
+    '.eh-bar .eh-print{background:#f0efed;color:#1f3442;border-color:#f0efed;font-weight:500} .eh-bar .eh-print:hover{background:#fff}' +
+    '.eh-upd{display:flex;justify-content:flex-end;align-items:center;gap:12px;font:12px Jost,Inter,Arial,sans-serif;color:#5f6670;padding:6px 8px}' +
+    '.eh-upd .eh-print{display:inline-flex;align-items:center;gap:6px;font:500 13px Jost,Inter,Arial,sans-serif;color:#1f3442;background:#fff;border:1px solid #c5cad1;border-radius:999px;padding:5px 12px;cursor:pointer}' +
     '.eh-load{font:14px Jost,Inter,Arial,sans-serif;color:#5f6670;padding:24px}';
 
   function noIndex() {
@@ -92,23 +94,34 @@
     function show(name, html, updated) {
       var cfg = PAGES[name];
       el.innerHTML = '';
-      if (portal && name !== 'home') {
+      var f = document.createElement('iframe');
+      function printIt() { try { var w = f.contentWindow; if (w.ehPrint) w.ehPrint(); else { w.focus(); w.print(); } } catch (e) { window.print(); } }
+      var PRINT_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>';
+      if (portal) {
         var bar = document.createElement('div'); bar.className = 'eh-bar';
-        bar.innerHTML = '<button type="button">← Trustee home</button><b></b><span></span>';
+        bar.innerHTML = (name !== 'home' ? '<button type="button" class="eh-back">← Trustee home</button>' : '') +
+          '<b></b><span></span><button type="button" class="eh-print" title="Print in black and white">' + PRINT_ICON + 'Print</button>';
         bar.querySelector('b').textContent = cfg.title;
-        bar.querySelector('span').textContent = updated ? 'Updated ' + fmtDate(updated) : '';
-        bar.querySelector('button').addEventListener('click', function () { go('home'); });
+        bar.querySelector('span').textContent = updated && name !== 'home' ? 'Updated ' + fmtDate(updated) : '';
+        var back = bar.querySelector('.eh-back'); if (back) back.addEventListener('click', function () { go('home'); });
+        bar.querySelector('.eh-print').addEventListener('click', printIt);
         el.appendChild(bar);
       }
-      var f = document.createElement('iframe');
       f.className = 'eh-frame'; f.title = cfg.title; f.setAttribute('scrolling', 'no');
       el.appendChild(f);
-      if (!portal) { var upd = document.createElement('div'); upd.className = 'eh-upd'; upd.textContent = 'Updated ' + fmtDate(updated); el.appendChild(upd); }
+      if (!portal) {
+        var upd = document.createElement('div'); upd.className = 'eh-upd';
+        upd.innerHTML = '<button type="button" class="eh-print">' + PRINT_ICON + 'Print</button><span></span>';
+        upd.querySelector('span').textContent = 'Updated ' + fmtDate(updated);
+        upd.querySelector('.eh-print').addEventListener('click', printIt);
+        el.insertBefore(upd, f);
+      }
       function size() { try { var d = f.contentDocument; if (d && d.documentElement) f.style.height = Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0) + 'px'; } catch (e) {} }
       f.addEventListener('load', function () {
         size();
         try {
           var d = f.contentDocument;
+          d.documentElement.classList.add('eh-in-portal');
           if (window.ResizeObserver && d.body) new ResizeObserver(size).observe(d.body);
           setTimeout(size, 400); setTimeout(size, 1500);
           // links to other pages open in place; outside links open in a new tab

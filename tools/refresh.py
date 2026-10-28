@@ -8,12 +8,18 @@ WORK_DIR holds:
   plan.html          the workplan artifact's index.html
   budget.xlsx        optional: a new spreadsheet to replace the download
 Any piece that is missing is left as it is in the repository.
+Every page gets the black-and-white print layout (tools/print_kit.py) before it is encrypted.
 """
 import os, subprocess, sys, datetime
 work = sys.argv[1]
 repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 tools = os.path.join(repo, 'tools')
 py = sys.executable
+def kit(src, landscape=False):
+    # black-and-white print layout and Print button, added to every page published
+    out = src[:-5] + '-print.html'
+    subprocess.run([py, os.path.join(tools, 'print_kit.py'), src, out] + (['--landscape'] if landscape else []), check=True)
+    return out
 def enc(src, out, *extra):
     subprocess.run([py, os.path.join(tools, 'encrypt.py'), src, os.path.join(repo, out), *extra], check=True)
 done = []
@@ -22,11 +28,11 @@ if os.path.exists(page) and os.path.isdir(data):
     snap = datetime.date.today().strftime('%-d %B %Y')
     out = os.path.join(work, 'budget-built.html')
     subprocess.run([py, os.path.join(tools, 'build_budget.py'), page, data, snap, out], check=True)
-    enc(out, 'budget.enc'); done.append('budget')
+    enc(kit(out), 'budget.enc'); done.append('budget')
 for name in ('report', 'plan'):
     p = os.path.join(work, name + '.html')
     if os.path.exists(p) and os.path.getsize(p) > 1000:
-        enc(p, name + '.enc'); done.append(name)
+        enc(kit(p, name == 'plan'), name + '.enc'); done.append(name)
 x = os.path.join(work, 'budget.xlsx')
 if os.path.exists(x):
     nm = os.environ.get('EH_XLSX_NAME', 'EH budget.xlsx')
@@ -35,7 +41,7 @@ rp = os.path.join(work, 'report.html')
 if os.path.exists(rp) and os.path.getsize(rp) > 1000:
     hp = os.path.join(work, 'home-built.html')
     subprocess.run([py, os.path.join(tools, 'update_home.py'), rp, hp], check=True)
-    enc(hp, 'home.enc'); done.append('home')
+    enc(kit(hp), 'home.enc'); done.append('home')
 print('refreshed:', ', '.join(done) or 'nothing')
 
 # manifest of last-updated times (no content), used for the "Updated" stamps

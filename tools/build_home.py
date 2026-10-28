@@ -34,6 +34,24 @@ papers = ''.join(
 library = ''.join(
     f'<a class="lib" href="#{l["go"]}" data-go="{l["go"]}"><span class="lt">{e(l["title"])}</span>'
     f'<span class="ld">{e(l["desc"])}</span><span class="lg">{e(l["tag"])}</span></a>' for l in data.get('library', []))
+def _k(name):
+    return next((k for k in data.get('kpis', []) if k['k'] == name), None)
+def _line(name, fmt):
+    k = _k(name)
+    return fmt.format(v=k['v'], sub=k['sub'].rstrip('.')) if k else ''
+notes = data.get('keyinfo_notes', {})
+KEYINFO = [
+    ('Budget and finance', 'budget', _line('Year ahead', '{v} over the next 12 months, with one more let.')),
+    ('Workplan', 'plan', _line('Development projects', '{v} development projects: {sub}.')),
+    ('Trustee report', 'report', _line('Hire booked, next 3 months', 'Room hire booked for the next three months: {v}.')),
+    ('Safeguarding', 'report', ''),
+    ('Property', 'report', _line('Compliance checks', '{v} compliance checks tracked; {sub}.')),
+]
+keyinfo = ''.join(
+    f'<li><span class="kn">{i}</span><div><a class="kh" href="#{go}" data-go="{go}">{e(h)}</a>'
+    f'<p>{e(" ".join(x for x in [auto, notes.get(h, "")] if x))}</p></div></li>'
+    for i, (h, go, auto) in enumerate(KEYINFO, 1))
+report_meeting = data.get('report_meeting', '')
 coming = ''.join(f'<li>{e(c)}</li>' for c in data.get('coming', []))
 later = ' · '.join(e(x) for x in data.get('later_meetings', []))
 extra = ''
@@ -42,7 +60,7 @@ if data.get('forward'):
     <div class="card"><h3>Room hire in the diary</h3><p class="small muted" style="margin:0">Listed paid hire by month, from Checkfront. CotE and EH's own use are not charged.</p>
       <div class="fwd" role="img" aria-label="Listed paid hire by month">{bars}</div>
       <div class="legend"><span><i style="background:var(--ink)"></i>This report</span><span><i style="background:var(--navy)"></i>Booked ahead</span><span><i style="background:var(--gold)"></i>Under £1,300 a month</span></div></div>
-    <div class="card"><h3>For the trustees on {e(m["label"].split(" ",1)[1])}</h3><p class="small muted" style="margin:0">From section 8 of the report.</p><ul class="dec">{decisions}</ul></div>
+    <div class="card"><h3>Asked of the trustees{(" on " + e(report_meeting.split(" ",1)[1])) if report_meeting else ""}</h3><p class="small muted" style="margin:0">From section 8 of the latest report.</p><ul class="dec">{decisions}</ul></div>
   </section>
 
 
@@ -133,6 +151,14 @@ h2 .rule{{flex:1;height:1px;background:var(--line);transform:translateY(-6px)}}
 .lg{{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);margin-top:6px}}
 .coming{{margin-top:14px;font-size:.84rem;color:var(--muted)}}
 .coming ul{{display:inline;list-style:none;padding:0;margin:0}} .coming li{{display:inline}} .coming li+li::before{{content:" · "}}
+.keyinfo{{position:relative;z-index:2;margin-top:-84px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 24px 8px;box-shadow:0 10px 30px rgba(31,52,66,.08)}}
+.keyinfo h2{{margin:0 0 4px}}
+.keyinfo ol{{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0 20px}}
+.keyinfo li{{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:14px 0;border-top:1px solid var(--line)}}
+.kn{{font-family:var(--display);font-size:1.5rem;font-weight:300;color:var(--gold);line-height:1.1}}
+.kh{{font-weight:600;font-size:1.05rem;border-bottom:1px solid transparent}} .kh:hover{{border-color:var(--navy)}}
+.keyinfo p{{margin:4px 0 0;font-size:.95rem;line-height:1.45}}
+.kpis.after{{margin-top:22px}}
 footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}}
 :focus-visible{{outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}}
 @media (max-width:900px){{.kpis,.papers{{grid-template-columns:1fr 1fr}}.libs{{grid-template-columns:1fr 1fr}}.grid2{{grid-template-columns:1fr}}}}
@@ -149,9 +175,11 @@ footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);fon
   <div class="ms">Then {later}</div></div>
 </div></header>
 <main class="wrap">
-  {'<div class="kpis">'+kpis+'</div>' if kpis else ''}
+  <section class="keyinfo" aria-labelledby="ki"><h2 id="ki">Key information</h2><ol>{keyinfo}</ol></section>
 
-  <section class="{'' if kpis else 'lift'}">{'<h2>The three papers <span class="rule"></span></h2>' if kpis else ''}<div class="papers">{papers}</div></section>
+  {'<div class="kpis after">'+kpis+'</div>' if kpis else ''}
+
+  <section>{'<h2>The three papers <span class="rule"></span></h2>' if kpis else ''}<div class="papers">{papers}</div></section>
 
   {extra}
 

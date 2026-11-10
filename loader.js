@@ -15,6 +15,14 @@
     policies:    { title: 'Policy register', file: 'policies.enc' }
   };
   var KEYNAME = 'eh-pages-pw';
+  // archived trustee reports: report-YYYY-MM-DD opens report-YYYY-MM-DD.enc (the report for that meeting)
+  function page(name) {
+    if (PAGES[name]) return PAGES[name];
+    var m = /^report-(\d{4})-(\d{2})-(\d{2})$/.exec(name || '');
+    if (!m) return null;
+    var d = new Date(+m[1], +m[2] - 1, +m[3]);
+    return { title: 'Trustee report, ' + d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + ' meeting', file: name + '.enc' };
+  }
 
   function b64(s) { var r = atob(s), u = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) u[i] = r.charCodeAt(i); return u; }
   function ss(get, v) { try { if (get) return sessionStorage.getItem(KEYNAME); if (v === null) sessionStorage.removeItem(KEYNAME); else sessionStorage.setItem(KEYNAME, v); } catch (e) { return null; } }
@@ -85,15 +93,15 @@
     if (el.getAttribute('data-eh-done')) return; el.setAttribute('data-eh-done', '1');
     if (el.getAttribute('data-full') !== 'off') bleed(el);
     var start = el.getAttribute('data-page');
-    if (!PAGES[start]) { el.textContent = 'Unknown page.'; return; }
+    if (!page(start)) { el.textContent = 'Unknown page.'; return; }
     addCss();
     var portal = start === 'home';
     var pw = null, current = null;
 
-    function wanted() { var h = (location.hash || '').slice(1); return portal && PAGES[h] ? h : start; }
+    function wanted() { var h = (location.hash || '').slice(1); return portal && page(h) ? h : start; }
 
     function show(name, html, updated) {
-      var cfg = PAGES[name];
+      var cfg = page(name);
       el.innerHTML = '';
       var f = document.createElement('iframe');
       function printIt() { try { var w = f.contentWindow; if (w.ehPrint) w.ehPrint(); else { w.focus(); w.print(); } } catch (e) { window.print(); } }
@@ -128,7 +136,7 @@
           // links to other pages open in place; outside links open in a new tab
           d.addEventListener('click', function (e) {
             var a = e.target.closest && e.target.closest('[data-go]');
-            if (a && PAGES[a.getAttribute('data-go')]) { e.preventDefault(); go(a.getAttribute('data-go')); }
+            if (a && page(a.getAttribute('data-go'))) { e.preventDefault(); go(a.getAttribute('data-go')); }
           });
           Array.prototype.forEach.call(d.querySelectorAll('a[href^="http"]'), function (a) { if (!a.target) a.target = '_blank'; });
           // updated dates on the home page
@@ -155,7 +163,7 @@
     function load(name) {
       current = name;
       el.innerHTML = '<p class="eh-load">Loading…</p>';
-      return fetchJson(PAGES[name].file).then(function (enc) {
+      return fetchJson(page(name).file).then(function (enc) {
         return decrypt(enc, pw).then(function (buf) {
           if (current !== name) return;
           show(name, new TextDecoder().decode(buf), enc.u);
@@ -181,7 +189,7 @@
     function gate(msg) {
       el.innerHTML = '<div class="eh-gate"><form autocomplete="off"><h2></h2><p>For trustees and Co-Leads. Enter the password to view.</p>' +
         '<label>Password</label><input type="password" required><button type="submit">Open</button><div class="eh-msg" aria-live="polite"></div></form></div>';
-      el.querySelector('h2').textContent = portal ? 'Epiphany House trustees' : PAGES[start].title;
+      el.querySelector('h2').textContent = portal ? 'Epiphany House trustees' : page(start).title;
       var form = el.querySelector('form'), input = el.querySelector('input'), btn = el.querySelector('button'), m = el.querySelector('.eh-msg');
       if (msg) m.textContent = msg;
       form.addEventListener('submit', function (e) {

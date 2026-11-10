@@ -7,6 +7,7 @@ WORK_DIR holds:
   report.html        the trustee report artifact's index.html
   plan.html          the workplan artifact's index.html
   policies.html      the policy register artifact's index.html
+  archive/report-YYYY-MM-DD.html  optional: archived trustee reports, one per meeting
   budget.xlsx        optional: a new spreadsheet to replace the download
 Any piece that is missing is left as it is in the repository.
 Every page gets the black-and-white print layout (tools/print_kit.py) before it is encrypted.
@@ -34,6 +35,15 @@ for name in ('report', 'plan', 'policies'):
     p = os.path.join(work, name + '.html')
     if os.path.exists(p) and os.path.getsize(p) > 1000:
         enc(kit(p, name == 'plan'), name + '.enc'); done.append(name)
+# archived trustee reports: WORK_DIR/archive/report-YYYY-MM-DD.html -> report-YYYY-MM-DD.enc
+import re as _re
+arch = os.path.join(work, 'archive')
+if os.path.isdir(arch):
+    for fn in sorted(os.listdir(arch)):
+        m = _re.fullmatch(r'(report-\d{4}-\d{2}-\d{2})\.html', fn)
+        p = os.path.join(arch, fn)
+        if m and os.path.getsize(p) > 1000:
+            enc(kit(p), m.group(1) + '.enc'); done.append(m.group(1))
 x = os.path.join(work, 'budget.xlsx')
 if os.path.exists(x):
     nm = os.environ.get('EH_XLSX_NAME', 'EH budget.xlsx')

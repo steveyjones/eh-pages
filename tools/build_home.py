@@ -151,7 +151,8 @@ h2 .rule{{flex:1;height:1px;background:var(--line);transform:translateY(-6px)}}
 .tag{{align-self:start;justify-self:start;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:999px;background:rgba(62,99,121,.12);color:var(--navy)}}
 .t-decide{{background:rgba(163,64,46,.12);color:var(--rust)}} .t-confirm{{background:rgba(220,161,60,.18);color:#8a5b12}}
 /* papers */
-.papers{{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}}
+.papers{{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}}
+@media (max-width:1100px){{.papers{{grid-template-columns:1fr 1fr}}}}
 .paper{{display:flex;flex-direction:column;gap:6px;padding:22px;border-radius:16px;background:var(--panel);border:1px solid var(--line);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}}
 .paper:hover{{transform:translateY(-3px);box-shadow:0 16px 36px rgba(31,52,66,.12);border-color:var(--gold)}}
 .paper .ic{{width:46px;height:46px;border-radius:12px;background:var(--ink);display:grid;place-items:center;margin-bottom:8px}}

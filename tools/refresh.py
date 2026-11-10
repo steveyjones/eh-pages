@@ -6,6 +6,7 @@ WORK_DIR holds:
   data/*.csv         budget assumptions development bookings usage bank
   report.html        the trustee report artifact's index.html
   plan.html          the workplan artifact's index.html
+  policies.html      the policy register artifact's index.html
   budget.xlsx        optional: a new spreadsheet to replace the download
 Any piece that is missing is left as it is in the repository.
 Every page gets the black-and-white print layout (tools/print_kit.py) before it is encrypted.
@@ -29,7 +30,7 @@ if os.path.exists(page) and os.path.isdir(data):
     out = os.path.join(work, 'budget-built.html')
     subprocess.run([py, os.path.join(tools, 'build_budget.py'), page, data, snap, out], check=True)
     enc(kit(out), 'budget.enc'); done.append('budget')
-for name in ('report', 'plan'):
+for name in ('report', 'plan', 'policies'):
     p = os.path.join(work, name + '.html')
     if os.path.exists(p) and os.path.getsize(p) > 1000:
         enc(kit(p, name == 'plan'), name + '.enc'); done.append(name)

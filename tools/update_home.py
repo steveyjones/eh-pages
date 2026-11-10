@@ -21,6 +21,13 @@ old = AESGCM(key).decrypt(b(enc['i']), b(enc['c']), None).decode()
 data = json.loads(html.unescape(re.search(r'<script type="application/json" id="home-data">(.*?)</script>', old, re.S).group(1)))
 before = json.dumps(data, ensure_ascii=False, sort_keys=True)
 
+# the policy register page: a card in the papers row, and the policies tile opens it
+if not any(p.get('go') == 'policies' for p in data.get('papers', [])):
+    data.setdefault('papers', []).append({'go': 'policies', 'icon': 'doc', 'kicker': 'Policies',
+        'title': 'Policy register', 'desc': 'Every policy, its stage, owner, review date and where the current draft is.'})
+for k in data.get('kpis', []):
+    if k['k'] == 'Policies to sign off': k['go'] = 'policies'
+
 r = open(report_path, encoding='utf-8').read()
 def text(s): return ' '.join(html.unescape(re.sub(r'<[^>]+>', ' ', s)).split())
 notes = []

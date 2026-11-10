@@ -110,6 +110,37 @@ m = re.search(r'sign-off on (\d+ \w+) \((\d+)(?: of \d+)?\) and the other half i
 k = kpi('Policies to sign off')
 if k and m:
     k['v'] = f'{m.group(2)}/{int(m.group(2)) + int(m.group(4))}'; k['sub'] = f'{m.group(2)} on {m.group(1)}, the other {m.group(4)} in {m.group(3)}'
+# the policy register (policies.html beside the report) is the source of truth: count papers, not register lines.
+# Linked drafts (one file covering several register entries, or the P09-P11 data protection set) count as one paper.
+reg_path = os.path.join(os.path.dirname(os.path.abspath(report_path)), 'policies.html')
+if k and os.path.exists(reg_path):
+    try:
+        reg = json.loads(html.unescape(re.search(r'<script type="application/json" id="pr-data">(.*?)</script>', open(reg_path, encoding='utf-8').read(), re.S).group(1)))
+        SETS = {'P09': 'data', 'P10': 'data', 'P11': 'data'}
+        def paper(p): return SETS.get(p['id']) or (p.get('where') or p['id']).split('/')[-1]
+        def mkey(mt):
+            try: return datetime.datetime.strptime(mt, '%d %b %Y')
+            except ValueError:
+                try: return datetime.datetime.strptime(mt, '%b %Y')
+                except ValueError: return None
+        meets = {}
+        for p in reg['policies']:
+            if p.get('stage') == 'Current' or mkey(p.get('meeting', '')) is None: continue
+            meets.setdefault(p['meeting'], []).append(p)
+        order = sorted(meets, key=mkey)
+        if order:
+            first = meets[order[0]]
+            seen, names = [], []
+            for p in first:
+                pp = paper(p)
+                if pp in seen: continue
+                seen.append(pp)
+                names.append('data protection (3 policies)' if pp == 'data' else re.sub(r' (Policy|Policy and Reporting Procedure|and Conditions)$', '', p['policy']).lower().replace('ai ', 'AI '))
+            later = [f'{len({paper(p) for p in meets[mt]})} in {mkey(mt).strftime("%B")}' for mt in order[1:]]
+            d0 = mkey(order[0])
+            k['v'] = str(len(seen))
+            k['sub'] = f'papers on {d0.day} {d0.strftime("%B")} — ' + ', '.join(names) + ('. Then ' + ' and '.join(later) + '.' if later else '.')
+    except Exception as ex: notes.append(f'policy register not read: {ex}')
 
 # good news: quotes from the report's Good news section
 stories = re.findall(r'<figure class="story"><blockquote>(.*?)</blockquote><figcaption><b>(.*?)</b>\s*·\s*(.*?)</figcaption>', section('goodnews'), re.S)

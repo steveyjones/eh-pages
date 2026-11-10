@@ -138,7 +138,8 @@ if k and os.path.exists(reg_path):
                 names.append('data protection (3 policies)' if pp == 'data' else re.sub(r' (Policy|Policy and Reporting Procedure|and Conditions)$', '', p['policy']).lower().replace('ai ', 'AI '))
             later = [f'{len({paper(p) for p in meets[mt]})} in {mkey(mt).strftime("%B")}' for mt in order[1:]]
             d0 = mkey(order[0])
-            k['v'] = str(len(seen))
+            total = sum(len({paper(p) for p in meets[mt]}) for mt in order)
+            k['v'] = f'{len(seen)}/{total}'
             k['sub'] = f'papers on {d0.day} {d0.strftime("%B")} — ' + ', '.join(names) + ('. Then ' + ' and '.join(later) + '.' if later else '.')
     except Exception as ex: notes.append(f'policy register not read: {ex}')
 

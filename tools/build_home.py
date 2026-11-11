@@ -27,6 +27,7 @@ bars = ''.join(
 decisions = ''.join(
     f'<li><span class="tag t-{e(t.lower())}">{e(t)}</span><div><strong>{e(h)}</strong>{"<p>" + e(p) + "</p>" if p else ""}</div></li>'
     for t, h, p in data.get('decisions', []))
+NUMWORD = {1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight'}
 papers = ''.join(
     f'<a class="paper" href="#{p["go"]}" data-go="{p["go"]}"><span class="ic">{ICONS.get(p["icon"], "")}</span>'
     f'<span class="pk">{e(p["kicker"])}</span><span class="pt">{e(p["title"])}</span><span class="pd">{e(p["desc"])}</span>'
@@ -225,7 +226,7 @@ footer{{margin:64px 0 0;padding:22px 0 36px;border-top:1px solid var(--line);fon
 
   {activity}
 
-  <section>{'<h2>The three papers <span class="rule"></span></h2>' if kpis else ''}<div class="papers">{papers}</div></section>
+  <section>{'<h2>The ' + NUMWORD.get(len(data['papers']), str(len(data['papers']))) + ' papers <span class="rule"></span></h2>' if kpis else ''}<div class="papers">{papers}</div></section>
 
   {extra}
 

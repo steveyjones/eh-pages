@@ -1,24 +1,21 @@
 """Refresh the trustee homepage from the current trustee report.
 
-usage: EH_PAGES_PASSWORD=... python3 tools/update_home.py REPORT.html OUT_HOME.html
-Reads the previous homepage data out of home.enc (it is embedded there), takes the
-figures that live in the report, and rebuilds the page with tools/build_home.py.
+usage: EH_STATE_KEY=... python3 tools/update_home.py REPORT.html OUT_HOME.html
+Reads the previous homepage data from home-state.enc (AES-GCM under EH_STATE_KEY, a data key
+that only unlocks this working file; it is not the trustee password), takes the figures that
+live in the report, writes the new state back, and rebuilds the page with tools/build_home.py.
 Anything it cannot read from the report keeps its previous value; it prints what changed.
 """
 import base64, datetime, html, json, os, re, subprocess, sys
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
 
 repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 report_path, out = sys.argv[1], sys.argv[2]
-pw = os.environ['EH_PAGES_PASSWORD'].encode()
-
-enc = json.load(open(os.path.join(repo, 'home.enc')))
 b = base64.b64decode
-key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=b(enc['s']), iterations=enc['n']).derive(pw)
-old = AESGCM(key).decrypt(b(enc['i']), b(enc['c']), None).decode()
-data = json.loads(html.unescape(re.search(r'<script type="application/json" id="home-data">(.*?)</script>', old, re.S).group(1)))
+state_key = b(os.environ['EH_STATE_KEY'])
+state_path = os.path.join(repo, 'home-state.enc')
+st = json.load(open(state_path))
+data = json.loads(AESGCM(state_key).decrypt(b(st['i']), b(st['c']), None).decode())
 before = json.dumps(data, ensure_ascii=False, sort_keys=True)
 
 # the policy register page: a card in the papers row, and the policies tile opens it
@@ -186,5 +183,7 @@ after = json.dumps(data, ensure_ascii=False, sort_keys=True)
 tmp = out + '.json'
 json.dump(data, open(tmp, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 subprocess.run([sys.executable, os.path.join(repo, 'tools', 'build_home.py'), tmp, os.path.join(repo, 'tools', 'logo.txt'), out], check=True)
+iv = os.urandom(12)
+json.dump({'i': base64.b64encode(iv).decode(), 'c': base64.b64encode(AESGCM(state_key).encrypt(iv, after.encode(), None)).decode()}, open(state_path, 'w'))
 print('home data changed' if after != before else 'home data unchanged')
 for n in notes: print('note:', n)

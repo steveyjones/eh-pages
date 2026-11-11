@@ -31,11 +31,36 @@
       if (!r.ok) throw new Error('fetch ' + r.status); return r.json();
     });
   }
-  function decrypt(enc, pw) {
+  function decryptV1(enc, pw) {
     return crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']).then(function (base) {
       return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(enc.s), iterations: enc.n, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
     }).then(function (key) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(enc.i) }, key, b64(enc.c)); });
   }
+  // v2: the trustees' private key is rebuilt from the password (PBKDF2 -> P-256 scalar); pages are encrypted to its public half
+  var privP = {};
+  function b64u(u) { var s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function privateKey(pw) {
+    if (privP[pw]) return privP[pw];
+    privP[pw] = fetchJson('pubkey.json').then(function (pk) {
+      return crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']).then(function (base) {
+        return crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(pk.s), iterations: pk.n, hash: 'SHA-256' }, base, 256);
+      }).then(function (bits) {
+        return crypto.subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', d: b64u(new Uint8Array(bits)), x: pk.x, y: pk.y, ext: true }, { name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']);
+      });
+    });
+    privP[pw].catch(function () { delete privP[pw]; });
+    return privP[pw];
+  }
+  function decryptV2(enc, pw) {
+    return Promise.all([privateKey(pw), crypto.subtle.importKey('raw', b64(enc.e), { name: 'ECDH', namedCurve: 'P-256' }, false, [])]).then(function (k) {
+      return crypto.subtle.deriveBits({ name: 'ECDH', public: k[1] }, k[0], 256);
+    }).then(function (shared) {
+      return crypto.subtle.importKey('raw', shared, 'HKDF', false, ['deriveKey']);
+    }).then(function (h) {
+      return crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: b64(enc.s), info: new TextEncoder().encode('eh-pages v2') }, h, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    }).then(function (key) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(enc.i) }, key, b64(enc.c)); });
+  }
+  function decrypt(enc, pw) { return enc.v === 2 ? decryptV2(enc, pw) : decryptV1(enc, pw); }
   function fmtDate(u) { try { return new Date(u).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } }
   var manifestP = null;
   function manifest() { if (!manifestP) manifestP = fetchJson('manifest.json').catch(function () { return {}; }); return manifestP; }

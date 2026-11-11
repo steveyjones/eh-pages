@@ -1,6 +1,8 @@
 """Rebuild the encrypted pages from a work folder.
 
-usage: EH_PAGES_PASSWORD=... python3 tools/refresh.py WORK_DIR
+usage: EH_STATE_KEY=... python3 tools/refresh.py WORK_DIR
+(No trustee password is needed: pages are encrypted to the public key in pubkey.json.
+ EH_STATE_KEY only unlocks home-state.enc, the homepage's working data.)
 WORK_DIR holds:
   budget-page.html   the dashboard page (files/index.html, field "text")
   data/*.csv         budget assumptions development bookings usage bank
@@ -60,7 +62,7 @@ import json, glob
 mf = {}
 for p in glob.glob(os.path.join(repo, '*.enc')):
     name = os.path.basename(p)[:-4]
-    if name.endswith('-xlsx'): continue
+    if name.endswith('-xlsx') or name == 'home-state': continue
     try: mf[name] = json.load(open(p)).get('u')
     except Exception: pass
 json.dump(mf, open(os.path.join(repo, 'manifest.json'), 'w'), indent=1, sort_keys=True)

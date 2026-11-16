@@ -113,7 +113,7 @@ reg_path = os.path.join(os.path.dirname(os.path.abspath(report_path)), 'policies
 if k and os.path.exists(reg_path):
     try:
         reg = json.loads(html.unescape(re.search(r'<script type="application/json" id="pr-data">(.*?)</script>', open(reg_path, encoding='utf-8').read(), re.S).group(1)))
-        SETS = {'P09': 'data', 'P10': 'data', 'P11': 'data'}
+        SETS = {k: 'data' for k in ('P09', 'P10', 'P11', 'P12', 'P13', 'P14', 'P15')}
         def paper(p): return SETS.get(p['id']) or (p.get('where') or p['id']).split('/')[-1]
         def mkey(mt):
             try: return datetime.datetime.strptime(mt, '%d %b %Y')
@@ -132,7 +132,7 @@ if k and os.path.exists(reg_path):
                 pp = paper(p)
                 if pp in seen: continue
                 seen.append(pp)
-                names.append('data protection (3 policies)' if pp == 'data' else re.sub(r' (Policy|Policy and Reporting Procedure|and Conditions)$', '', p['policy']).lower().replace('ai ', 'AI '))
+                names.append('data protection set (P09–P15)' if pp == 'data' else re.sub(r' (Policy|Policy and Reporting Procedure|and Conditions)$', '', p['policy']).lower().replace('ai ', 'AI '))
             later = [f'{len({paper(p) for p in meets[mt]})} in {mkey(mt).strftime("%B")}' for mt in order[1:]]
             d0 = mkey(order[0])
             total = sum(len({paper(p) for p in meets[mt]}) for mt in order)
